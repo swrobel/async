@@ -24,6 +24,12 @@ require 'io/nonblock'
 RSpec.describe Async::Scheduler, if: Async::Scheduler.supported? do
 	include_context Async::RSpec::Reactor
 	
+	it "can intercept sleep" do
+		expect(reactor).to receive(:sleep).with(0.001)
+		
+		sleep(0.001)
+	end
+	
 	describe 'IO.pipe' do
 		let(:message) {"Helloooooo World!"}
 		
@@ -33,6 +39,9 @@ RSpec.describe Async::Scheduler, if: Async::Scheduler.supported? do
 			output.nonblock = true
 			
 			reactor.async do
+				# This causes fd leakage for some reason:
+				# sleep(0.001)
+				
 				message.each_char do |character|
 					output.write(character)
 				end
