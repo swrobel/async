@@ -29,6 +29,7 @@ matrix:
       env: JRUBY_OPTS="--debug -X+O"
     - rvm: truffleruby
     - rvm: ruby-head
+    - rvm: ruby-head-scheduler --url https://github.com/ioquatix/ruby.git --branch thread-selector
   allow_failures:
     - rvm: truffleruby
     - rvm: ruby-head
