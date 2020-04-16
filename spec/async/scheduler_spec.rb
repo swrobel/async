@@ -35,8 +35,6 @@ RSpec.describe Async::Scheduler, if: Async::Scheduler.supported? do
 		
 		it "can send message via pipe" do
 			input, output = IO.pipe
-			input.nonblock = true
-			output.nonblock = true
 			
 			reactor.async do
 				# This causes fd leakage for some reason:
