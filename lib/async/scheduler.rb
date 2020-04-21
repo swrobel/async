@@ -35,6 +35,9 @@ module Async
 		def initialize(reactor)
 			@reactor = reactor
 			@blocking_started_at = nil
+			
+			@ios = ::ObjectSpace::WeakMap.new
+			@wrappers = ::ObjectSpace::WeakMap.new
 		end
 		
 		def set!
@@ -49,30 +52,45 @@ module Async
 			end
 		end
 		
-		private def from_descriptor(fd)
-			io = IO.for_fd(fd, autoclose: false)
-			return Wrapper.new(io, @reactor)
+		private def from_io(io)
+			@wrappers[io] ||= Wrapper.new(io, @reactor)
 		end
 		
-		def wait_readable(fd, timeout = nil)
-			wrapper = from_descriptor(fd)
+		private def from_fd(fd)
+			@ios[fd] ||= ::IO.for_fd(fd, autoclose: false)
+		end
+		
+		def wait_readable(io, timeout = nil)
+			wrapper = from_io(io)
 			wrapper.wait_readable(timeout)
 		ensure
 			wrapper.reactor = nil
 		end
 		
-		def wait_writable(fd)
-			wrapper = from_descriptor(fd)
+		def wait_writable(io, timeout = nil)
+			wrapper = from_io(io)
 			wrapper.wait_writable(timeout)
 		ensure
 			wrapper.reactor = nil
 		end
 		
-		def wait_for_single_fd(fd, events, duration)
-			wrapper = from_descriptor(fd)
-			wrapper.wait_any(duration)
+		def wait_any(io, events, timeout = nil)
+			wrapper = from_io(io)
+			wrapper.wait_any(timeout)
 		ensure
 			wrapper.reactor = nil
+		end
+		
+		def wait_readable_fd(fd)
+			wait_readable(from_fd(fd))
+		end
+
+		def wait_writable_fd(fd)
+			wait_writable(from_fd(fd))
+		end
+
+		def wait_for_single_fd(fd, events, duration)
+			wait_any(from_fd(fd), events, duration)
 		end
 		
 		def wait_sleep(duration)

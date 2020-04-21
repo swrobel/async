@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 
 require 'async/scheduler'
-require 'io/nonblock'
+require 'net/http'
 
 RSpec.describe Async::Scheduler, if: Async::Scheduler.supported? do
 	include_context Async::RSpec::Reactor
@@ -50,6 +50,14 @@ RSpec.describe Async::Scheduler, if: Async::Scheduler.supported? do
 			expect(input.read).to be == message
 			
 			input.close
+		end
+		
+		it "can fetch website using Net::HTTP" do
+			reactor.async do
+				response = Net::HTTP.get(URI "https://www.codeotaku.com/index")
+				
+				expect(response).to_not be_nil
+			end
 		end
 	end
 end
